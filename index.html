@@ -321,7 +321,7 @@ async function runTest(){
     document.getElementById('outputTimer').textContent=(r.elapsed/1000).toFixed(1)+'s';
     if(r.passed){
       failSet.delete(currentId.split('/')[3]);localStorage.setItem('42_fails',JSON.stringify([...failSet]));
-      ob.className='output-body success';ob.innerHTML='✅✅✅ SUCCESSO! Tutti i test superati. ✅✅✅\n\nL\'esercizio è stato marcato come completato.';
+      ob.className='output-body success';ob.innerHTML='✅✅✅ SUCCESS! All tests passed. ✅✅✅\n\nThe exercise has been marked as completed.';
       api('/api/save-output/'+pts(currentId).p3,{method:'POST',body:JSON.stringify({output:ob.innerHTML})}).catch(()=>{});
       const ex=exercises.find(e=>e.id===currentId);if(ex)doneSet.add(ex.name);renderList();document.querySelectorAll('.subject-inline').forEach(x=>x.classList.remove('open'));const sj=document.getElementById('subj_'+(ex?ex.name:''));if(sj&&ex&&ex.subject)sj.classList.add('open');
       document.getElementById('statusRight').textContent=`${doneSet.size}/${exercises.length} completed`;
