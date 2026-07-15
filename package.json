@@ -1,0 +1,17 @@
+{
+  "name": "42-exam-web-ide",
+  "version": "1.0.0",
+  "description": "Web IDE per esercitarsi agli esami 42 — editor Ace, grademe automatico, tracciamento progressi",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["42", "exam", "ide", "codemirror", "ace"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
+}

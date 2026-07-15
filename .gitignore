@@ -1,0 +1,10 @@
+node_modules/
+rendu/
+traces/
+success/
+traceback
+.backup_pre_cleanup/
+*.backup_*
+*.bak
+.DS_Store
+*.log

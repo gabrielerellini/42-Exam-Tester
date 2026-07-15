@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>42 Exam Web IDE</title><link rel="icon" href="data:,">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0d1117 0%,#161b22 30%,#0d1117 60%,#1c2128 100%);background-attachment:fixed;color:#c9d1d9;font-size:18px}
+#app{display:flex;height:100vh}
+.sidebar{width:340px;min-width:340px;border-right:1px solid #30363d55;display:flex;flex-direction:column;background:rgba(22,27,34,.85);backdrop-filter:blur(10px)}
+.sidebar-header{padding:1rem;border-bottom:1px solid #30363d55;display:flex;justify-content:space-between;align-items:center}
+.sidebar-header h1{font-size:1.2rem;background:linear-gradient(90deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sidebar-controls{padding:.7rem 1rem;border-bottom:1px solid #30363d55;display:flex;gap:.5rem}
+.sidebar-controls input{flex:1;padding:.4rem .6rem;border-radius:6px;border:1px solid #30363d;background:rgba(13,17,23,.7);color:#c9d1d9;font-size:.8rem;outline:none}
+.sidebar-controls input:focus{border-color:#58a6ff}
+.filter-row{display:flex;gap:.3rem;padding:.5rem 1rem;flex-wrap:wrap;border-bottom:1px solid #30363d55}
+.filter-btn{padding:.2rem .6rem;border-radius:4px;border:1px solid #30363d;background:transparent;color:#8b949e;cursor:pointer;font-size:.7rem}
+.filter-btn.active{background:linear-gradient(135deg,#1f6feb,#238636);color:#fff;border-color:transparent}
+.exercise-list{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#30363d transparent}
+.exercise-list::-webkit-scrollbar{width:6px}
+.exercise-list::-webkit-scrollbar-track{background:transparent}
+.exercise-list::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+.exercise-item{padding:.7rem 1rem;border-bottom:1px solid #21262d55;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:.15s}
+.exercise-item:hover{background:rgba(28,33,40,.6)}
+.exercise-item.active{background:rgba(31,111,235,.15);border-left:3px solid #58a6ff}
+.exercise-item.done{background:rgba(22,43,26,.9);border-left:3px solid #3fb950}
+.exercise-item.failed{background:rgba(43,22,22,.8);border-left:3px solid #f85149}
+.exercise-item .name{font-family:'Courier New',monospace;font-size:1rem;color:#58a6ff}
+.exercise-item .lvl-badge{font-size:.65rem;padding:.1rem .5rem;border-radius:8px;font-weight:600}
+.lvl-0{background:#238636;color:#fff}
+.lvl-1{background:#1f6feb;color:#fff}
+.lvl-2{background:#9e6a03;color:#fff}
+.lvl-3{background:#da3633;color:#fff}
+.lvl-inc{background:#8b949e;color:#fff;opacity:.7}
+.lvl-nc{background:#8957e5;color:#fff}
+.exercise-item .check{font-size:.9rem}
+.subject-inline{overflow:hidden;max-height:0;opacity:0;transition:max-height .5s cubic-bezier(.4,0,.2,1),opacity .4s ease,margin .4s ease;margin:0 1rem;padding:0 .9rem;background:rgba(22,27,34,.6);border:1px solid #30363d;border-radius:6px;font-size:.9rem;line-height:1.5;color:#c9d1d9}
+.subject-inline.open{max-height:600px;opacity:1;margin:0 1rem .5rem;padding:.7rem .9rem}
+.trace-inline{overflow:hidden;max-height:0;opacity:0;transition:max-height .4s cubic-bezier(.4,0,.2,1),opacity .3s ease,margin .3s ease;margin:0 1rem;padding:0 .9rem;background:rgba(33,13,13,.5);border:1px solid #da363355;border-radius:6px;font-size:.85rem;line-height:1.4;color:#f0c6c6;white-space:pre-wrap;font-family:'Courier New',monospace}
+.trace-inline.open{max-height:800px;opacity:1;margin:0 1rem .5rem;padding:.7rem .9rem}
+.trace-header{color:#f85149;font-weight:600;font-size:.7rem;margin-bottom:.4rem;display:flex;justify-content:space-between}
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:rgba(13,17,23,.3)}
+.main-header{padding:.4rem 1.2rem;border-bottom:1px solid #30363d55;display:flex;justify-content:space-between;align-items:center;background:rgba(22,27,34,.7);backdrop-filter:blur(10px);min-height:44px}
+.main-header h2{font-size:1.3rem;background:linear-gradient(90deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:'Courier New',monospace}
+.main-header .actions{display:flex;gap:.4rem;align-items:center}
+.zoom-group{display:flex;align-items:center;gap:2px;margin-right:4px}
+.zoom-btn{background:rgba(255,255,255,.06);border:1px solid #30363d;color:#8b949e;cursor:pointer;border-radius:3px;font-size:.6rem;padding:.1rem .35rem;line-height:1}
+.zoom-label{color:#8b949e;font-size:.65rem;min-width:20px;text-align:center;font-variant-numeric:tabular-nums}
+.btn{padding:.35rem .8rem;border-radius:6px;border:1px solid #30363d;cursor:pointer;font-size:.75rem;font-weight:600;transition:.2s;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,#238636,#2ea043);color:#fff;border-color:transparent}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(35,134,54,.3)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-danger{background:linear-gradient(135deg,#da3633,#f85149);color:#fff;border-color:transparent}
+.btn-danger:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(218,54,51,.3)}
+.btn-outline{background:rgba(255,255,255,.05);color:#8b949e;border-color:#30363d}
+.btn-outline:hover{border-color:#58a6ff;color:#58a6ff}
+.split-pane{flex:1;display:flex;overflow:hidden}
+.editor-pane{flex:1;display:flex;flex-direction:column;min-width:0}
+.ace_editor{height:100%!important;font-family:'Courier New',Courier,monospace!important;background:rgba(13,17,23,.5)!important}
+.ace_gutter{background:rgba(22,27,34,.6)!important;color:#484f58!important}
+.ace_gutter-active-line{background:rgba(31,111,235,.15)!important}
+.ace_gutter-cell{padding-left:8px!important}
+.ace_content{background:transparent!important}
+.ace_cursor{color:#58a6ff!important;border-left:2px solid #58a6ff!important}
+.ace_marker-layer .ace_selection{background:rgba(88,166,255,.2)!important}
+.ace_marker-layer .ace_highlight_marker{position:absolute;background:rgba(88,166,255,.18)!important;border-radius:2px;z-index:2}
+.ace_active-line{background:rgba(31,111,235,.08)!important}
+.ace_scrollbar::-webkit-scrollbar{width:6px;height:6px}
+.ace_scrollbar::-webkit-scrollbar-track{background:transparent}
+.ace_scrollbar::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+.editor-pane{position:relative}
+.output-pane{width:400px;min-width:300px;border-left:1px solid #30363d55;display:flex;flex-direction:column;background:rgba(13,17,23,.5)}
+.output-header{padding:.5rem 1rem;border-bottom:1px solid #30363d55;font-size:.75rem;color:#8b949e;font-weight:600;display:flex;justify-content:space-between}
+.output-body{flex:1;overflow-y:auto;padding:1rem;font-family:'Courier New',monospace;font-size:.95rem;white-space:pre-wrap;line-height:1.5;scrollbar-width:thin;scrollbar-color:#30363d transparent}
+.output-body::-webkit-scrollbar{width:6px}
+.output-body::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+.output-body.success{color:#3fb950}
+.output-body.failure{color:#f85149}
+.loading{display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e}
+.loading .spinner{width:24px;height:24px;border:3px solid #30363d;border-top-color:#58a6ff;border-radius:50%;animation:spin .8s linear infinite;margin-right:.5rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status-bar{padding:.3rem 1rem;background:rgba(22,27,34,.7);border-top:1px solid #30363d55;font-size:.75rem;color:#8b949e;display:flex;justify-content:space-between}
+#editor{position:absolute;top:0;left:0;right:0;bottom:0;font-size:18px}
+</style>
+</head>
+<body onkeydown="if(event.ctrlKey&&event.key=='r'){event.preventDefault();runTest()}">
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>📚 42 Exam</h1>
+      <button class="btn btn-outline" onclick="loadExercises()">🔄</button>
+    </div>
+    <div class="sidebar-controls">
+      <input id="search" placeholder="Cerca..." oninput="filterList()">
+    </div>
+    <div class="filter-row" id="filterRow"></div>
+    <div class="exercise-list" id="exerciseList"></div>
+  </div>
+  <div class="main-area">
+    <div class="main-header">
+      <h2 id="exTitle">Seleziona un esercizio</h2>
+      <div class="actions">
+        <div class="zoom-group">
+          <button class="zoom-btn" onclick="zoomOut()">A−</button>
+          <span class="zoom-label" id="zoomLabel">18</span>
+          <button class="zoom-btn" onclick="zoomIn()">A+</button>
+        </div>
+        <button class="btn btn-primary" id="btnRun" onclick="runTest()" style="display:none">▶️ grademe</button>
+        <button class="btn btn-danger" id="btnCancel" onclick="cancelTest()" style="display:none">❌ Annulla</button>
+        <button class="btn btn-danger" id="btnReset" onclick="resetExercise()" style="display:none">🗑️ Cancella</button>
+      </div>
+    </div>
+    <div class="split-pane">
+      <div class="editor-pane">
+        <div class="loading" id="editorLoading"><div class="spinner"></div><span>Caricamento...</span></div>
+        <div id="editor"></div>
+      </div>
+      <div class="output-pane">
+        <div class="output-header"><span>Output</span><span id="outputTimer"></span></div>
+        <div class="output-body" id="outputBody"><span style="color:#8b949e">Clicca un esercizio e premi "grademe".</span></div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <span id="statusLeft">👨‍💻 Pronto</span>
+      <span id="statusRight"></span>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.5/ace.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.5/ext-language_tools.js"></script>
+<script>
+let exercises=[],doneSet=new Set(),failSet=new Set(JSON.parse(localStorage.getItem('42_fails')||'[]')),currentId=null,editor=null,currentFilter=localStorage.getItem('42_filter')||'all';
+function api(p,o={}){return fetch(p,{headers:{'Content-Type':'application/json'},signal:o.signal,...o}).then(r=>{if(!r.ok)throw new Error(r.statusText);return r.json()})}
+function pts(id){const p=id.split('/');return{p0:p[0],p1:p[1],p2:p[2],p3:p[3]}}
+function exUrl(id){const p=pts(id);return `/api/exercise/${p.p0}/${p.p1}/${p.p2}/${p.p3}`}
+function svUrl(id){const p=pts(id);return `/api/save-code/${p.p0}/${p.p1}/${p.p2}/${p.p3}`}
+function tsUrl(id){const p=pts(id);return `/api/run-test/${p.p0}/${p.p1}/${p.p2}/${p.p3}`}
+function rsUrl(id){const p=pts(id);return `/api/reset/${p.p3}`}
+async function loadExercises(){try{
+  const[exData,prog]=await Promise.all([api('/api/exercises'),api('/api/progress')]);
+  exercises=exData;doneSet=new Set(prog.done);renderFilters();renderList();
+  document.getElementById('statusRight').textContent=`${doneSet.size}/${exercises.length} completati`;
+  const savedId=localStorage.getItem('42_current');if(savedId&&exercises.some(e=>e.id===savedId)){selectExercise(savedId)}else if(!currentId&&exercises.length){selectExercise(exercises[0].id)}
+}catch(e){console.error(e)}}
+function renderFilters(){
+  const exams=[...new Set(exercises.map(e=>e.exam))].sort();
+  document.getElementById('filterRow').innerHTML=
+    '<button class="filter-btn'+(currentFilter==='all'?' active':'')+'" data-exam="all" onclick="setFilter(\'all\',this)">Tutti</button>'+
+    exams.map(e=>`<button class="filter-btn${currentFilter===e?' active':''}" data-exam="${e}" onclick="setFilter('${e}',this)">${e.replace('exam_','Exam ').replace('_','.')}</button>`).join('')+
+    `<button class="btn btn-danger" style="margin-left:auto;padding:.2rem .5rem;font-size:.7rem" onclick="resetAll()">🗑️</button>`;
+}
+function setFilter(exam,btn){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentFilter=exam;localStorage.setItem('42_filter',exam);renderList()}
+function gl(l){return l===99||l==='nc'?'nc':l.toString()}
+function renderList(){
+  const c=document.getElementById('exerciseList'),s=document.getElementById('search').value.toLowerCase();c.innerHTML='';
+  const filtered=exercises.filter(e=>{if(currentFilter!=='all'&&e.exam!==currentFilter)return false;return!s||e.name.toLowerCase().includes(s)});
+  if(!filtered.length){c.innerHTML='<div style="padding:1rem;color:#8b949e;text-align:center">Nessun esercizio</div>';return}
+  filtered.forEach(e=>{
+    const isDone=doneSet.has(e.name),isActive=currentId===e.id,l=gl(e.level),lc=l==='nc'?'lvl-nc':'lvl-'+l,lt=l==='nc'?'🧩':'L'+l;
+    const lvlBadge=e.incomplete?'lvl-inc':'lvl-'+l;
+    const lvlText=e.incomplete?'⚠️':'L'+l;
+    const d=document.createElement('div');d.className=`exercise-item ${isDone?'done':''} ${isActive?'active':''}`;
+    const hasFailed=failSet.has(e.name);
+    d.className+=hasFailed?' failed':'';
+    d.innerHTML=`<span class="name">${e.name}</span><div style="display:flex;gap:.4rem;align-items:center"><span class="lvl-badge ${lvlBadge}">${lvlText}</span></div>`;
+    const sub=document.createElement('div');sub.className='subject-inline';sub.id='subj_'+e.name;
+    if(e.subject)sub.textContent=e.subject;
+    const trc=document.createElement('div');trc.className='trace-inline';trc.id='trc_'+e.name;
+    d.onclick=()=>selectExercise(e.id);
+    c.appendChild(d);c.appendChild(sub);c.appendChild(trc)
+  })}
+function filterList(){renderList()}
+async function selectExercise(id){
+  currentId=id;localStorage.setItem('42_current',id);renderList();
+  document.getElementById('editorLoading').style.display='flex';
+  document.getElementById('editor').style.display='block';
+  ['btnRun','btnReset'].forEach(x=>document.getElementById(x).style.display='none');
+  document.getElementById('btnCancel').style.display='none';
+  document.querySelectorAll('.subject-inline').forEach(s=>s.classList.remove('open'));
+  // Ripristina output salvato
+  const ob=document.getElementById('outputBody');
+  const saved=await api('/api/get-output/'+pts(id).p3).catch(()=>({output:''}));if(saved.output){ob.innerHTML=saved.output;ob.className='output-body'}
+  else{ob.innerHTML='<span style="color:#8b949e">Clicca un esercizio e premi "grademe".</span>';ob.className='output-body';document.getElementById('outputTimer').textContent=''}
+  try{
+    const d=await api(exUrl(id));
+    document.getElementById('exTitle').textContent=d.name+'.c';
+    const sj=document.getElementById('subj_'+d.name);
+    if(sj&&d.subject){setTimeout(()=>sj.classList.add('open'),30)}
+    // Traces inline
+    const tr=document.getElementById('trc_'+d.name);
+    const traces=d.traces||[];
+    if(tr&&traces.length){
+      let html='<div class="trace-header">📋 Traces ('+traces.length+') <span style="font-weight:400;font-size:.65rem">clicca per vedere</span></div>';
+      tr.innerHTML=html;
+      tr.style.cursor='pointer';
+      tr.onclick=()=>{
+        tr.classList.toggle('open');
+        if(tr.classList.contains('open')){
+          tr.innerHTML='<div class="trace-header">📋 Traces <span style="font-weight:400;font-size:.65rem;color:#8b949e">(clicca per chiudere)</span></div>';
+          tr.innerHTML+=traces.map(t=>{
+            // Pulisce il traceback: sostituisce escape, migliora leggibilità
+            let clean=t.content.replace(/\\n/g,'\n').replace(/\\t/g,'\t');
+            // Rimuove i <br> letterali
+            clean=clean.replace(/<br>/g,'\n');
+            // Evidenzia i marker importanti
+            return clean;
+          }).join('\n' + '-'.repeat(30) + '\n');
+        }else{
+          tr.innerHTML='<div class="trace-header">📋 Traces ('+traces.length+') <span style="font-weight:400;font-size:.65rem">clicca per vedere</span></div>';
+        }
+      };
+    }
+    document.getElementById('btnRun').style.display='inline-block';
+    document.getElementById('btnReset').style.display='inline-block';
+    document.getElementById('statusLeft').textContent='📁 '+d.id;
+    const code=d.userCode||'';
+    if(!editor){
+      editor = ace.edit('editor');
+      editor.setTheme('ace/theme/dracula');
+      editor.session.setMode('ace/mode/c_cpp');
+      editor.setOptions({
+        fontSize: zoomLevel + 'px',
+        tabSize: 4,
+        useSoftTabs: false,
+        autoScrollEditorIntoView: true,
+        enableBasicAutocompletion: true,
+        enableLiveAutocompletion: true,
+        enableSnippets: false
+      });
+      editor.setShowPrintMargin(false);
+      editor.session.setUseWrapMode(false);
+      editor.renderer.setShowGutter(true);
+      editor.renderer.setScrollMargin(10, 10, 10, 10);
+
+      // Shortcut salva
+      editor.commands.addCommand({
+        name: 'save',
+        bindKey: {win: 'Ctrl-S', mac: 'Cmd-S'},
+        exec: function() { saveCode(); }
+      });
+      // Shortcut run test
+      editor.commands.addCommand({
+        name: 'runTest',
+        bindKey: {win: 'Ctrl-R', mac: 'Cmd-R'},
+        exec: function() { runTest(); }
+      });
+
+                  // ★ COMPLETER: solo parole locali dal documento ★
+      var localCompleter = {
+        getCompletions: function(editor, session, pos, prefix, callback) {
+          var words = {};
+          var lines = session.getDocument().getAllLines();
+          for (var r = 0; r < lines.length; r++) {
+            var parts = lines[r].split(/[^a-zA-Z0-9_]+/);
+            for (var p = 0; p < parts.length; p++) {
+              var w = parts[p];
+              if (w && w.length >= prefix.length && w.substring(0, prefix.length) === prefix) {
+                words[w] = {name: w, value: w, score: 50, meta: 'local'};
+              }
+            }
+          }
+          var result = [];
+          for (var k in words) result.push(words[k]);
+          callback(null, result);
+        }
+      };
+      // Sostituisce TUTTI i completer di default con solo il nostro
+      editor.completers = [localCompleter];
+
+      // ★ HIGHLIGHT OCCURRENCES con changeCursor ★
+      var highlightMarkers = [];
+      editor.selection.on('changeCursor', function() {
+        highlightMarkers.forEach(function(m) {
+          try { editor.session.removeMarker(m); } catch(e) {}
+        });
+        highlightMarkers = [];
+
+        var cursor = editor.selection.getCursor();
+        if (!cursor || cursor.row === undefined) return;
+        var wordRange = editor.session.getWordRange(cursor.row, cursor.column);
+        var text = editor.session.getTextRange(wordRange);
+        if (!text || text.length < 2 || !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(text)) return;
+
+        var Range = ace.require('ace/range').Range;
+        var lines = editor.session.getDocument().getAllLines();
+        var searchLen = text.length;
+
+        for (var row = 0; row < lines.length; row++) {
+          var line = lines[row];
+          var col = 0;
+          while (col < line.length) {
+            var idx = line.indexOf(text, col);
+            if (idx === -1) break;
+            var before = (idx === 0) ? '' : line[idx - 1];
+            var afterChar = line[idx + searchLen] || '';
+            if (!/[a-zA-Z0-9_]/.test(before) && !/[a-zA-Z0-9_]/.test(afterChar)) {
+              var range = new Range(row, idx, row, idx + searchLen);
+              highlightMarkers.push(editor.session.addMarker(range, 'ace_highlight_marker', 'text', false));
+            }
+            col = idx + 1;
+          }
+        }
+      });    }
+    editor.setValue(code, -1);
+    editor.session.getUndoManager().reset();
+    editor.setReadOnly(false);
+    document.getElementById('editorLoading').style.display='none';
+    setTimeout(()=>editor.resize(),50);
+  }catch(e){document.getElementById('editorLoading').innerHTML='<span style="color:#f85149">❌ Errore</span>'}}
+async function saveCode(){if(!currentId||!editor)return;await api(svUrl(currentId),{method:'POST',body:JSON.stringify({code:editor.getValue()})});document.getElementById('statusLeft').textContent='💾 Salvato!';setTimeout(()=>document.getElementById('statusLeft').textContent='👨‍💻 Pronto',1500)}
+async function runTest(){
+  if(!currentId||!editor)return;await saveCode();
+  abortController=new AbortController();
+  const btn=document.getElementById('btnRun');btn.disabled=true;btn.textContent='⏳ grademe...';
+  document.getElementById('btnCancel').style.display='inline-block';
+  const ob=document.getElementById('outputBody');ob.innerHTML='<div class="loading"><div class="spinner"></div><span>Test in corso...</span></div>';ob.className='output-body';
+  try{
+    const r=await api(tsUrl(currentId),{method:'POST',signal:abortController.signal});
+    document.getElementById('outputTimer').textContent=(r.elapsed/1000).toFixed(1)+'s';
+    if(r.passed){
+      failSet.delete(currentId.split('/')[3]);localStorage.setItem('42_fails',JSON.stringify([...failSet]));
+      ob.className='output-body success';ob.innerHTML='✅✅✅ SUCCESSO! Tutti i test superati. ✅✅✅\n\nL\'esercizio è stato marcato come completato.';
+      api('/api/save-output/'+pts(currentId).p3,{method:'POST',body:JSON.stringify({output:ob.innerHTML})}).catch(()=>{});
+      const ex=exercises.find(e=>e.id===currentId);if(ex)doneSet.add(ex.name);renderList();document.querySelectorAll('.subject-inline').forEach(x=>x.classList.remove('open'));const sj=document.getElementById('subj_'+(ex?ex.name:''));if(sj&&ex&&ex.subject)sj.classList.add('open');
+      document.getElementById('statusRight').textContent=`${doneSet.size}/${exercises.length} completati`;
+    }else{
+      ob.className='output-body failure';
+      let clean=(r.traceback||"");
+      clean=clean.replace(/\\n/g,'\n').replace(/\\t/g,'\t');
+      clean=clean.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      clean=clean.replace(/-{8,}\s*8<-{3,}\s*\[?\s*START TEST\s*\]?/g,'\n━━━ INIZIO TEST ━━━');
+      clean=clean.replace(/-{8,}\s*8<-{3,}\s*\]?\s*END TEST\s*\[?\s*\]?/g,'\n━━━ FINE TEST ━━━\n');
+      clean=clean.replace(/💻 TEST/g,'▪ TEST');
+      clean=clean.replace(/🔎 YOUR OUTPUT:/g,'▪ TUO OUTPUT:');
+      clean=clean.replace(/🗝 EXPECTED OUTPUT:/g,'▪ OUTPUT ATTESO:');
+      clean=clean.replace(/❌ TIMEOUT/g,'▪ TIMEOUT');
+      clean=clean.replace(/❌ COMPILATION ERROR/g,'▪ ERRORE COMPILAZIONE');
+      clean=clean.replace(/^\s+/gm,'');
+      ob.innerHTML='❌❌❌ FALLIMENTO ❌❌❌\n\n'+clean;
+    }
+  }catch(e){
+    if(e.name==='AbortError'){cancelTest();return}
+    api('/api/save-output/'+pts(currentId).p3,{method:'POST',body:JSON.stringify({output:'❌ Errore: '+e.message})}).catch(()=>{});ob.className='output-body failure';ob.innerHTML='❌ Errore: '+e.message
+  }
+  btn.disabled=false;btn.textContent='▶️ grademe';
+  document.getElementById('btnCancel').style.display='none';
+}
+async function resetExercise(){if(!currentId||!confirm('Cancellare questo esercizio? Il codice salvato verrà eliminato.'))return;await api(rsUrl(currentId),{method:'POST'});const ex=exercises.find(e=>e.id===currentId);if(ex){doneSet.delete(ex.name);failSet.delete(ex.name)};localStorage.setItem('42_fails',JSON.stringify([...failSet]));renderList();selectExercise(currentId)}
+async function resetAll(){if(!confirm('RESETTARE TUTTI I PROGRESSI?'))return;await api('/api/reset-all',{method:'POST'});doneSet.clear();failSet.clear();localStorage.setItem('42_fails','[]');renderList();document.getElementById('statusRight').textContent=`0/${exercises.length} completati`;if(currentId)selectExercise(currentId)}
+let zoomLevel=18;
+let abortController=null;
+function cancelTest(){
+  if(abortController){abortController.abort();abortController=null}
+  const btn=document.getElementById('btnRun');btn.disabled=false;btn.textContent='▶️ grademe';
+  document.getElementById('btnCancel').style.display='none';
+  const ob=document.getElementById('outputBody');
+  ob.innerHTML='<span style="color:#8b949e">⏹️ Test annullato.</span>';
+  ob.className='output-body';
+}
+function zoomIn(){zoomLevel=Math.min(zoomLevel+2,32);applyZoom()}
+function zoomOut(){zoomLevel=Math.max(zoomLevel-2,8);applyZoom()}
+function applyZoom(){if(editor){editor.setFontSize(zoomLevel+'px')}document.getElementById('zoomLabel').textContent=zoomLevel}
+setInterval(()=>{if(currentId&&editor)saveCode()},30000);
+loadExercises();
+</script>
+</body>
+</html>
