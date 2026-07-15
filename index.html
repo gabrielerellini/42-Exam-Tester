@@ -89,18 +89,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div id="app">
   <div class="sidebar">
     <div class="sidebar-header">
-      <h1>📚 42 Exam</h1>
+      <h1>📚 42 Exam Tester</h1>
       <button class="btn btn-outline" onclick="loadExercises()">🔄</button>
     </div>
     <div class="sidebar-controls">
-      <input id="search" placeholder="Cerca..." oninput="filterList()">
+      <input id="search" placeholder="Search..." oninput="filterList()">
     </div>
     <div class="filter-row" id="filterRow"></div>
     <div class="exercise-list" id="exerciseList"></div>
   </div>
   <div class="main-area">
     <div class="main-header">
-      <h2 id="exTitle">Seleziona un esercizio</h2>
+      <h2 id="exTitle">Select an exercise</h2>
       <div class="actions">
         <div class="zoom-group">
           <button class="zoom-btn" onclick="zoomOut()">A−</button>
@@ -108,22 +108,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="zoom-btn" onclick="zoomIn()">A+</button>
         </div>
         <button class="btn btn-primary" id="btnRun" onclick="runTest()" style="display:none">▶️ grademe</button>
-        <button class="btn btn-danger" id="btnCancel" onclick="cancelTest()" style="display:none">❌ Annulla</button>
+        <button class="btn btn-danger" id="btnCancel" onclick="cancelTest()" style="display:none">❌ Cancel</button>
         <button class="btn btn-danger" id="btnReset" onclick="resetExercise()" style="display:none">🗑️ Cancella</button>
       </div>
     </div>
     <div class="split-pane">
       <div class="editor-pane">
-        <div class="loading" id="editorLoading"><div class="spinner"></div><span>Caricamento...</span></div>
+        <div class="loading" id="editorLoading"><div class="spinner"></div><span>Loading...</span></div>
         <div id="editor"></div>
       </div>
       <div class="output-pane">
         <div class="output-header"><span>Output</span><span id="outputTimer"></span></div>
-        <div class="output-body" id="outputBody"><span style="color:#8b949e">Clicca un esercizio e premi "grademe".</span></div>
+        <div class="output-body" id="outputBody"><span style="color:#8b949e">Click an exercise and press "grademe".</span></div>
       </div>
     </div>
     <div class="status-bar">
-      <span id="statusLeft">👨‍💻 Pronto</span>
+      <span id="statusLeft">👨‍💻 Ready</span>
       <span id="statusRight"></span>
     </div>
   </div>
@@ -141,13 +141,13 @@ function rsUrl(id){const p=pts(id);return `/api/reset/${p.p3}`}
 async function loadExercises(){try{
   const[exData,prog]=await Promise.all([api('/api/exercises'),api('/api/progress')]);
   exercises=exData;doneSet=new Set(prog.done);renderFilters();renderList();
-  document.getElementById('statusRight').textContent=`${doneSet.size}/${exercises.length} completati`;
+  document.getElementById('statusRight').textContent=`${doneSet.size}/${exercises.length} completed`;
   const savedId=localStorage.getItem('42_current');if(savedId&&exercises.some(e=>e.id===savedId)){selectExercise(savedId)}else if(!currentId&&exercises.length){selectExercise(exercises[0].id)}
 }catch(e){console.error(e)}}
 function renderFilters(){
   const exams=[...new Set(exercises.map(e=>e.exam))].sort();
   document.getElementById('filterRow').innerHTML=
-    '<button class="filter-btn'+(currentFilter==='all'?' active':'')+'" data-exam="all" onclick="setFilter(\'all\',this)">Tutti</button>'+
+    '<button class="filter-btn'+(currentFilter==='all'?' active':'')+'" data-exam="all" onclick="setFilter(\'all\',this)">All</button>'+
     exams.map(e=>`<button class="filter-btn${currentFilter===e?' active':''}" data-exam="${e}" onclick="setFilter('${e}',this)">${e.replace('exam_','Exam ').replace('_','.')}</button>`).join('')+
     `<button class="btn btn-danger" style="margin-left:auto;padding:.2rem .5rem;font-size:.7rem" onclick="resetAll()">🗑️</button>`;
 }
@@ -156,7 +156,7 @@ function gl(l){return l===99||l==='nc'?'nc':l.toString()}
 function renderList(){
   const c=document.getElementById('exerciseList'),s=document.getElementById('search').value.toLowerCase();c.innerHTML='';
   const filtered=exercises.filter(e=>{if(currentFilter!=='all'&&e.exam!==currentFilter)return false;return!s||e.name.toLowerCase().includes(s)});
-  if(!filtered.length){c.innerHTML='<div style="padding:1rem;color:#8b949e;text-align:center">Nessun esercizio</div>';return}
+  if(!filtered.length){c.innerHTML='<div style="padding:1rem;color:#8b949e;text-align:center">No exercises</div>';return}
   filtered.forEach(e=>{
     const isDone=doneSet.has(e.name),isActive=currentId===e.id,l=gl(e.level),lc=l==='nc'?'lvl-nc':'lvl-'+l,lt=l==='nc'?'🧩':'L'+l;
     const lvlBadge=e.incomplete?'lvl-inc':'lvl-'+l;
@@ -182,7 +182,7 @@ async function selectExercise(id){
   // Ripristina output salvato
   const ob=document.getElementById('outputBody');
   const saved=await api('/api/get-output/'+pts(id).p3).catch(()=>({output:''}));if(saved.output){ob.innerHTML=saved.output;ob.className='output-body'}
-  else{ob.innerHTML='<span style="color:#8b949e">Clicca un esercizio e premi "grademe".</span>';ob.className='output-body';document.getElementById('outputTimer').textContent=''}
+  else{ob.innerHTML='<span style="color:#8b949e">Click an exercise and press "grademe".</span>';ob.className='output-body';document.getElementById('outputTimer').textContent=''}
   try{
     const d=await api(exUrl(id));
     document.getElementById('exTitle').textContent=d.name+'.c';
@@ -309,13 +309,13 @@ async function selectExercise(id){
     document.getElementById('editorLoading').style.display='none';
     setTimeout(()=>editor.resize(),50);
   }catch(e){document.getElementById('editorLoading').innerHTML='<span style="color:#f85149">❌ Errore</span>'}}
-async function saveCode(){if(!currentId||!editor)return;await api(svUrl(currentId),{method:'POST',body:JSON.stringify({code:editor.getValue()})});document.getElementById('statusLeft').textContent='💾 Salvato!';setTimeout(()=>document.getElementById('statusLeft').textContent='👨‍💻 Pronto',1500)}
+async function saveCode(){if(!currentId||!editor)return;await api(svUrl(currentId),{method:'POST',body:JSON.stringify({code:editor.getValue()})});document.getElementById('statusLeft').textContent='💾 Saved!';setTimeout(()=>document.getElementById('statusLeft').textContent='👨‍💻 Ready',1500)}
 async function runTest(){
   if(!currentId||!editor)return;await saveCode();
   abortController=new AbortController();
   const btn=document.getElementById('btnRun');btn.disabled=true;btn.textContent='⏳ grademe...';
   document.getElementById('btnCancel').style.display='inline-block';
-  const ob=document.getElementById('outputBody');ob.innerHTML='<div class="loading"><div class="spinner"></div><span>Test in corso...</span></div>';ob.className='output-body';
+  const ob=document.getElementById('outputBody');ob.innerHTML='<div class="loading"><div class="spinner"></div><span>Testing...</span></div>';ob.className='output-body';
   try{
     const r=await api(tsUrl(currentId),{method:'POST',signal:abortController.signal});
     document.getElementById('outputTimer').textContent=(r.elapsed/1000).toFixed(1)+'s';
@@ -324,7 +324,7 @@ async function runTest(){
       ob.className='output-body success';ob.innerHTML='✅✅✅ SUCCESSO! Tutti i test superati. ✅✅✅\n\nL\'esercizio è stato marcato come completato.';
       api('/api/save-output/'+pts(currentId).p3,{method:'POST',body:JSON.stringify({output:ob.innerHTML})}).catch(()=>{});
       const ex=exercises.find(e=>e.id===currentId);if(ex)doneSet.add(ex.name);renderList();document.querySelectorAll('.subject-inline').forEach(x=>x.classList.remove('open'));const sj=document.getElementById('subj_'+(ex?ex.name:''));if(sj&&ex&&ex.subject)sj.classList.add('open');
-      document.getElementById('statusRight').textContent=`${doneSet.size}/${exercises.length} completati`;
+      document.getElementById('statusRight').textContent=`${doneSet.size}/${exercises.length} completed`;
     }else{
       ob.className='output-body failure';
       let clean=(r.traceback||"");
@@ -347,8 +347,8 @@ async function runTest(){
   btn.disabled=false;btn.textContent='▶️ grademe';
   document.getElementById('btnCancel').style.display='none';
 }
-async function resetExercise(){if(!currentId||!confirm('Cancellare questo esercizio? Il codice salvato verrà eliminato.'))return;await api(rsUrl(currentId),{method:'POST'});const ex=exercises.find(e=>e.id===currentId);if(ex){doneSet.delete(ex.name);failSet.delete(ex.name)};localStorage.setItem('42_fails',JSON.stringify([...failSet]));renderList();selectExercise(currentId)}
-async function resetAll(){if(!confirm('RESETTARE TUTTI I PROGRESSI?'))return;await api('/api/reset-all',{method:'POST'});doneSet.clear();failSet.clear();localStorage.setItem('42_fails','[]');renderList();document.getElementById('statusRight').textContent=`0/${exercises.length} completati`;if(currentId)selectExercise(currentId)}
+async function resetExercise(){if(!currentId||!confirm('Delete this exercise? The saved code will be removed.'))return;await api(rsUrl(currentId),{method:'POST'});const ex=exercises.find(e=>e.id===currentId);if(ex){doneSet.delete(ex.name);failSet.delete(ex.name)};localStorage.setItem('42_fails',JSON.stringify([...failSet]));renderList();selectExercise(currentId)}
+async function resetAll(){if(!confirm('RESET ALL PROGRESS?'))return;await api('/api/reset-all',{method:'POST'});doneSet.clear();failSet.clear();localStorage.setItem('42_fails','[]');renderList();document.getElementById('statusRight').textContent=`0/${exercises.length} completed`;if(currentId)selectExercise(currentId)}
 let zoomLevel=18;
 let abortController=null;
 function cancelTest(){
@@ -356,7 +356,7 @@ function cancelTest(){
   const btn=document.getElementById('btnRun');btn.disabled=false;btn.textContent='▶️ grademe';
   document.getElementById('btnCancel').style.display='none';
   const ob=document.getElementById('outputBody');
-  ob.innerHTML='<span style="color:#8b949e">⏹️ Test annullato.</span>';
+  ob.innerHTML='<span style="color:#8b949e">⏹️ Test cancelled.</span>';
   ob.className='output-body';
 }
 function zoomIn(){zoomLevel=Math.min(zoomLevel+2,32);applyZoom()}

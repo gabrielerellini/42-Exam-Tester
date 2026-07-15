@@ -1,81 +1,82 @@
-# 42 Exam Web IDE
+# 42 Exam Tester
 
-Un'IDE web per esercitarsi agli esami di **42**, direttamente dal browser.
+A web IDE to practice for **42 exams**, directly from your browser.
 
-## ✨ Funzionalità
+## ✨ Features
 
-- **Editor basato su Ace** (lo stesso di onlineGDB) con syntax highlighting per C
-- **Autocompletamento** con le parole locali del tuo codice
-- **Highlight occurrences** — clicca su una variabile/funzione e vede tutte le occorrenze
-- **Indentazione automatica** perfetta per C (tab reali)
-- **Grademe** — test automatici con tracciamento degli errori
-- **Salvataggio automatico** del codice ogni 30 secondi
-- **Tracciamento progressi** — esercizi completati/falliti persistono in localStorage
-- **Filtri** per esame (Exam 02, Exam 03, ...)
-- **Badge colorati** per livello (0-3) e badge ⚠️ per esercizi incompleti
-- **Zoom** dell'editor (pulsanti A+ / A−)
-- **Tema scuro** Dracula
+- **Ace Editor** (the same as onlineGDB) with C syntax highlighting
+- **Autocompletion** with local words from your code
+- **Highlight occurrences** — click on a variable/function and see all matches
+- **Smart auto-indentation** for C (real tabs)
+- **Grademe** — automated tests with error tracing
+- **Auto-save** every 30 seconds
+- **Progress tracking** — completed/failed exercises persist in localStorage
+- **Exam filters** (Exam 02, Exam 03, ...)
+- **Color badges** for levels (0-3) and ⚠️ for incomplete exercises
+- **Zoom** (A+ / A− buttons)
+- **Dark Dracula theme**
 
-## 🚀 Installazione
+## 🚀 Installation
 
 ```bash
-git clone <url-della-tua-repo>
-cd 42-exam-web-ide
+git clone https://github.com/gabrielerellini/42-Exam-Tester.git
+cd 42-Exam-Tester
 npm install
 npm start
 ```
 
-Apri il browser su **http://localhost:4242**
+Open your browser at **http://localhost:4242**
 
-## 🎮 Come usare
+## 🎮 How to use
 
-1. Seleziona un esercizio dalla sidebar sinistra
-2. Leggi il subject (si apre cliccando sul nome dell'esercizio)
-3. Scrivi il codice nell'editor
-4. Premi **▶️ grademe** per testare
-5. Se passa, l'esercizio viene segnato come completato ✅
+1. Select an exercise from the left sidebar
+2. Read the subject (click on the exercise name to expand)
+3. Write your code in the editor
+4. Press **▶️ grademe** to test
+5. If it passes, the exercise is marked as completed ✅
 
-### Scorciatoie
+### Shortcuts
 
-| Tasto | Azione |
+| Key | Action |
 |---|---|
-| Ctrl+S | Salva il codice |
-| Ctrl+R | Esegui grademe |
+| Ctrl+S | Save code |
+| Ctrl+R | Run grademe |
 
-## 🧩 Struttura del progetto
+## 🧩 Project structure
 
 ```
-42-EXAM-WEB/
-├── .subjects/           # Esercizi (subject, tester, soluzione di riferimento)
-│   ├── STUD_PART/       # Esercizi per studenti
-│   └── PISCINE_PART/    # Esercizi per piscine
-├── .system/             # Sistema di grading (compilazione, test)
+42-Exam-Tester/
+├── .subjects/           # Exercises (subject, tester, reference solution)
+│   ├── STUD_PART/       # Student exams
+│   └── PISCINE_PART/    # Piscine exams
+├── .system/             # Grading system (compilation, tests)
 ├── index.html           # Frontend (Ace Editor + UI)
 ├── server.js            # Backend (Express)
-├── package.json         # Dipendenze
-└── README.md            # Questo file
+├── package.json         # Dependencies
+└── README.md            # This file
 ```
 
-## 🏷️ Cosa significa il badge
+## 🏷️ Badge reference
 
-| Badge | Significato |
+| Badge | Meaning |
 |---|---|
-| L0 verde | Livello 0 — Facile |
-| L1 blu | Livello 1 — Medio |
-| L2 giallo | Livello 2 — Difficile |
-| L3 rosso | Livello 3 — Molto difficile |
-| ⚠️ grigio | Esercizio incompleto (manca subject o tester) |
+| L0 green | Level 0 — Easy |
+| L1 blue | Level 1 — Medium |
+| L2 yellow | Level 2 — Hard |
+| L3 red | Level 3 — Very hard |
+| ⚠️ gray | Incomplete (missing subject or tester) |
 
-## 🤝 Come contribuire
+## 🤝 Contributing
 
-Hai un subject o un tester per un esercizio incompleto? Apri una pull request o segnalalo!
+Do you have a subject or a tester for an incomplete exercise? Open a PR or report it!
 
-1. Trova l'esercizio in `.subjects/STUD_PART/exam_N/NOME/`
-2. Se manca il subject, crea `attachment/subject.en.txt`
-3. Se manca il tester, crea `tester.sh`
-4. Fai una PR!
+1. Find the exercise in `.subjects/STUD_PART/exam_N/NAME/`
+2. If subject is missing, create `attachment/subject.en.txt`
+3. If tester is missing, create `tester.sh`
+4. Submit a PR!
 
-## 📜 Crediti
+## 📜 Credits
 
-- **JCluzet** — Creatore del sistema di grading e tester originali (42_EXAM)
-- **OnlineGDB** — Ispirazione per il comportamento dell'editor Ace
+- **JCluzet** — Creator of the original grading system and testers ([42_EXAM](https://github.com/JCluzet/42_EXAM))
+- **gabrielerellini** — Web IDE adaptation (Ace Editor, frontend, optimizations)
+- **OnlineGDB** — Inspiration for the Ace editor behavior
