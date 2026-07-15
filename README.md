@@ -27,6 +27,8 @@ npm start
 
 Open your browser at **http://localhost:4242**
 
+To stop the server: press `Ctrl+C` in the terminal.
+
 ## 🎮 How to use
 
 1. Select an exercise from the left sidebar
