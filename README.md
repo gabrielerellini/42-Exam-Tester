@@ -16,6 +16,8 @@ A web IDE to practice for **42 exams**, directly from your browser.
 - **Zoom** (A+ / A− buttons)
 - **Dark Dracula theme**
 
+![Screenshot](screenshot.png)
+
 ## 🚀 Installation
 
 ```bash
