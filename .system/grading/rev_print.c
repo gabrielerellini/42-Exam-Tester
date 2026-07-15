@@ -1,23 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_swap.c                                          :+:      :+:    :+:   */
+/*   rev_print.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jcluzet <jcluzet@student.42.fr>            +#+  +:+       +#+        */
+/*   By: galpers <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/04/06 14:56:59 by galpers           #+#    #+#             */
-/*   Updated: 2022/05/18 15:40:36 by jcluzet          ###   ########.fr       */
+/*   Created: 2022/04/06 15:18:11 by galpers           #+#    #+#             */
+/*   Updated: 2022/04/06 15:25:22 by galpers          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <unistd.h>
-#include <stdio.h>
 
-void    ft_swap(int *a, int *b)
+int	main(int ac, char **av)
 {
-	int	temp;
+	int	i;
 
-	temp = *a;
-	*a = *b;
-	*b = temp;
+	i = 0;
+	if (ac == 2)
+	{
+		while(av[1][i] != '\0')
+			i++;
+		while (i >= 1)
+		{
+			write(1, &av[1][i - 1], 1);
+			i--;
+		}
+	}
+	write(1, "\n", 1);
 }

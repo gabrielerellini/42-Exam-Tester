@@ -330,15 +330,8 @@ async function runTest(){
       let clean=(r.traceback||"");
       clean=clean.replace(/\\n/g,'\n').replace(/\\t/g,'\t');
       clean=clean.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      clean=clean.replace(/-{8,}\s*8<-{3,}\s*\[?\s*START TEST\s*\]?/g,'\n━━━ INIZIO TEST ━━━');
-      clean=clean.replace(/-{8,}\s*8<-{3,}\s*\]?\s*END TEST\s*\[?\s*\]?/g,'\n━━━ FINE TEST ━━━\n');
-      clean=clean.replace(/💻 TEST/g,'▪ TEST');
-      clean=clean.replace(/🔎 YOUR OUTPUT:/g,'▪ TUO OUTPUT:');
-      clean=clean.replace(/🗝 EXPECTED OUTPUT:/g,'▪ OUTPUT ATTESO:');
-      clean=clean.replace(/❌ TIMEOUT/g,'▪ TIMEOUT');
-      clean=clean.replace(/❌ COMPILATION ERROR/g,'▪ ERRORE COMPILAZIONE');
-      clean=clean.replace(/^\s+/gm,'');
-      ob.innerHTML='❌❌❌ FALLIMENTO ❌❌❌\n\n'+clean;
+            clean=clean.replace(/^\s+/gm,'');
+      ob.innerHTML='❌❌❌ FAILURE ❌❌❌\n\n'+clean;
     }
   }catch(e){
     if(e.name==='AbortError'){cancelTest();return}
