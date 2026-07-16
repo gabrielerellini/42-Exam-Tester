@@ -8,7 +8,9 @@ A web IDE to practice for **42 exams**, directly from your browser.
 - **Autocompletion** with local words from your code
 - **Highlight occurrences** — click on a variable/function and see all matches
 - **Smart auto-indentation** for C (real tabs)
-- **Grademe** — automated tests with error tracing
+- **Run Code** (Ctrl+R) — compile & run your code instantly, useful for debugging
+- **Grademe** (Ctrl+G) — automated tests with error tracing
+- **Resizable output panel** — drag to resize, toggle with 🖥️ button
 - **Auto-save** every 30 seconds
 - **Progress tracking** — completed/failed exercises persist in localStorage
 - **Exam filters** (Exam 02, Exam 03, ...)
@@ -36,15 +38,17 @@ To stop the server: press `Ctrl+C` in the terminal.
 1. Select an exercise from the left sidebar
 2. Read the subject (click on the exercise name to expand)
 3. Write your code in the editor
-4. Press **▶️ grademe** to test
-5. If it passes, the exercise is marked as completed ✅
+4. Press **▶️ Run Code** (Ctrl+R) to compile & run your code
+5. Press **📝 grademe** (Ctrl+G) to run the official tests
+6. If it passes, the exercise is marked as completed ✅
 
 ### Shortcuts
 
 | Key | Action |
 |---|---|
+| Ctrl+R | Run code (compile + execute) |
+| Ctrl+G | Grading (run official tests) |
 | Ctrl+S | Save code |
-| Ctrl+R | Run grademe |
 
 ## 🧩 Project structure
 

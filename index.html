@@ -54,9 +54,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
 .btn-danger{background:linear-gradient(135deg,#da3633,#f85149);color:#fff;border-color:transparent}
 .btn-danger:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(218,54,51,.3)}
+.btn-success{background:linear-gradient(135deg,#1f6feb,#58a6ff);color:#fff;border-color:transparent}
+.btn-success:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(31,111,235,.3)}
+.btn-success:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
 .btn-outline{background:rgba(255,255,255,.05);color:#8b949e;border-color:#30363d}
 .btn-outline:hover{border-color:#58a6ff;color:#58a6ff}
-.split-pane{flex:1;display:flex;overflow:hidden}
+.split-pane{flex:1;display:flex;overflow:hidden;position:relative}
 .editor-pane{flex:1;display:flex;flex-direction:column;min-width:0}
 .ace_editor{height:100%!important;font-family:'Courier New',Courier,monospace!important;background:rgba(13,17,23,.5)!important}
 .ace_gutter{background:rgba(22,27,34,.6)!important;color:#484f58!important}
@@ -71,8 +74,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .ace_scrollbar::-webkit-scrollbar-track{background:transparent}
 .ace_scrollbar::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
 .editor-pane{position:relative}
-.output-pane{width:400px;min-width:300px;border-left:1px solid #30363d55;display:flex;flex-direction:column;background:rgba(13,17,23,.5)}
+.output-pane{width:400px;min-width:200px;border-left:1px solid #30363d55;display:flex;flex-direction:column;background:rgba(13,17,23,.5);position:relative}
+.output-pane.hidden{display:none}
+.resize-handle{width:5px;cursor:col-resize;background:transparent;position:absolute;left:-3px;top:0;bottom:0;z-index:10}
+.resize-handle:hover,.resize-handle.active{background:#58a6ff55}
 .output-header{padding:.5rem 1rem;border-bottom:1px solid #30363d55;font-size:.75rem;color:#8b949e;font-weight:600;display:flex;justify-content:space-between}
+#outputMode{color:#58a6ff;font-weight:700}
 .output-body{flex:1;overflow-y:auto;padding:1rem;font-family:'Courier New',monospace;font-size:.95rem;white-space:pre-wrap;line-height:1.5;scrollbar-width:thin;scrollbar-color:#30363d transparent}
 .output-body::-webkit-scrollbar{width:6px}
 .output-body::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
@@ -85,7 +92,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #editor{position:absolute;top:0;left:0;right:0;bottom:0;font-size:18px}
 </style>
 </head>
-<body onkeydown="if(event.ctrlKey&&event.key=='r'){event.preventDefault();runTest()}">
+<body onkeydown="if(event.ctrlKey&&event.key=='r'){event.preventDefault();runCode()}else if(event.ctrlKey&&event.key=='g'){event.preventDefault();runTest()}">
 <div id="app">
   <div class="sidebar">
     <div class="sidebar-header">
@@ -106,8 +113,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="zoom-btn" onclick="zoomOut()">A−</button>
           <span class="zoom-label" id="zoomLabel">18</span>
           <button class="zoom-btn" onclick="zoomIn()">A+</button>
+          <button class="zoom-btn" id="btnToggleTerminal" onclick="toggleTerminal()" title="Toggle terminal" style="font-size:1.1rem;line-height:1">🖥️</button>
         </div>
-        <button class="btn btn-primary" id="btnRun" onclick="runTest()" style="display:none">▶️ grademe</button>
+        <button class="btn btn-success" id="btnRunCode" onclick="runCode()" style="display:none">▶️ Run Code</button>
+        <button class="btn btn-primary" id="btnRun" onclick="runTest()" style="display:none">📝 grademe</button>
         <button class="btn btn-danger" id="btnCancel" onclick="cancelTest()" style="display:none">❌ Cancel</button>
         <button class="btn btn-danger" id="btnReset" onclick="resetExercise()" style="display:none">🗑️ Delete</button>
       </div>
@@ -117,9 +126,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="loading" id="editorLoading"><div class="spinner"></div><span>Loading...</span></div>
         <div id="editor"></div>
       </div>
-      <div class="output-pane">
-        <div class="output-header"><span>Output</span><span id="outputTimer"></span></div>
-        <div class="output-body" id="outputBody"><span style="color:#8b949e">Click an exercise and press "grademe".</span></div>
+      <div class="output-pane" id="outputPane">
+        <div class="resize-handle" id="resizeHandle"></div>
+        <div class="output-header">
+          <span id="outputMode">Commands</span>
+          <span style="display:flex;gap:6px;align-items:center">
+            <span id="outputTimer"></span>
+            <span id="btnCloseOutput" onclick="closeOutput()" style="cursor:pointer;color:#8b949e;font-size:1rem;line-height:1;display:none" title="Close output">✕</span>
+          </span>
+        </div>
+        <div class="output-body" id="outputBody"><span style="color:#8b949e">Ctrl+R = Run code | Ctrl+G = Grading | Ctrl+S = Save</span></div>
       </div>
     </div>
     <div class="status-bar">
@@ -176,13 +192,13 @@ async function selectExercise(id){
   currentId=id;localStorage.setItem('42_current',id);renderList();
   document.getElementById('editorLoading').style.display='flex';
   document.getElementById('editor').style.display='block';
-  ['btnRun','btnReset'].forEach(x=>document.getElementById(x).style.display='none');
+  ['btnRun','btnRunCode','btnReset'].forEach(x=>document.getElementById(x).style.display='none');
   document.getElementById('btnCancel').style.display='none';
   document.querySelectorAll('.subject-inline').forEach(s=>s.classList.remove('open'));
   // Ripristina output salvato
   const ob=document.getElementById('outputBody');
-  const saved=await api('/api/get-output/'+pts(id).p3).catch(()=>({output:''}));if(saved.output){ob.innerHTML=saved.output;ob.className='output-body'}
-  else{ob.innerHTML='<span style="color:#8b949e">Click an exercise and press "grademe".</span>';ob.className='output-body';document.getElementById('outputTimer').textContent=''}
+  const saved=await api('/api/get-output/'+pts(id).p3).catch(()=>({output:''}));if(saved.output){ob.innerHTML=saved.output;ob.className='output-body';document.getElementById('outputMode').textContent='Commands';document.getElementById('btnCloseOutput').style.display='inline'}
+  else{ob.innerHTML='<span style="color:#8b949e">Ctrl+R = Run code | Ctrl+G = Grading | Ctrl+S = Save</span>';ob.className='output-body';document.getElementById('outputTimer').textContent='';document.getElementById('outputMode').textContent='Commands'}
   try{
     const d=await api(exUrl(id));
     document.getElementById('exTitle').textContent=d.name+'.c';
@@ -212,6 +228,7 @@ async function selectExercise(id){
         }
       };
     }
+    document.getElementById('btnRunCode').style.display='inline-block';
     document.getElementById('btnRun').style.display='inline-block';
     document.getElementById('btnReset').style.display='inline-block';
     document.getElementById('statusLeft').textContent='📁 '+d.id;
@@ -240,10 +257,16 @@ async function selectExercise(id){
         bindKey: {win: 'Ctrl-S', mac: 'Cmd-S'},
         exec: function() { saveCode(); }
       });
-      // Shortcut run test
+      // Shortcut run code
+      editor.commands.addCommand({
+        name: 'runCode',
+        bindKey: {win: 'Ctrl-R', mac: 'Cmd-R'},
+        exec: function() { runCode(); }
+      });
+      // Shortcut grading
       editor.commands.addCommand({
         name: 'runTest',
-        bindKey: {win: 'Ctrl-R', mac: 'Cmd-R'},
+        bindKey: {win: 'Ctrl-G', mac: 'Cmd-G'},
         exec: function() { runTest(); }
       });
 
@@ -310,10 +333,27 @@ async function selectExercise(id){
     setTimeout(()=>editor.resize(),50);
   }catch(e){document.getElementById('editorLoading').innerHTML='<span style="color:#f85149">❌ Errore</span>'}}
 async function saveCode(){if(!currentId||!editor)return;await api(svUrl(currentId),{method:'POST',body:JSON.stringify({code:editor.getValue()})});document.getElementById('statusLeft').textContent='💾 Saved!';setTimeout(()=>document.getElementById('statusLeft').textContent='👨‍💻 Ready',1500)}
+async function runCode(){
+  if(!currentId||!editor)return;await saveCode();
+  document.getElementById('outputMode').textContent='Output';
+  const btn=document.getElementById('btnRunCode');btn.disabled=true;
+  const ob=document.getElementById('outputBody');ob.innerHTML='<div class="loading"><div class="spinner"></div><span>Compiling & Running...</span></div>';ob.className='output-body';
+  try{
+    const exName=pts(currentId).p3;
+    const r=await api('/api/run-code/'+exName,{method:'POST'});
+    document.getElementById('outputTimer').textContent=r.elapsed?(r.elapsed/1000).toFixed(1)+'s':'';
+    ob.innerHTML='<pre style="margin:0;white-space:pre-wrap">'+r.output.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</pre>';
+    ob.className='output-body';document.getElementById('btnCloseOutput').style.display='inline';
+  }catch(e){
+    ob.innerHTML='❌ Error: '+e.message;ob.className='output-body failure';document.getElementById('btnCloseOutput').style.display='inline';
+  }
+  btn.disabled=false;document.getElementById('outputMode').textContent='Output';
+}
 async function runTest(){
   if(!currentId||!editor)return;await saveCode();
+  document.getElementById('outputMode').textContent='Evaluation';
   abortController=new AbortController();
-  const btn=document.getElementById('btnRun');btn.disabled=true;btn.textContent='⏳ grademe...';
+  const btn=document.getElementById('btnRun');btn.disabled=true;btn.textContent='⏳ grading...';
   document.getElementById('btnCancel').style.display='inline-block';
   const ob=document.getElementById('outputBody');ob.innerHTML='<div class="loading"><div class="spinner"></div><span>Testing...</span></div>';ob.className='output-body';
   try{
@@ -321,7 +361,7 @@ async function runTest(){
     document.getElementById('outputTimer').textContent=(r.elapsed/1000).toFixed(1)+'s';
     if(r.passed){
       failSet.delete(currentId.split('/')[3]);localStorage.setItem('42_fails',JSON.stringify([...failSet]));
-      ob.className='output-body success';ob.innerHTML='✅✅✅ SUCCESS! All tests passed. ✅✅✅\n\nThe exercise has been marked as completed.';
+      ob.className='output-body success';ob.innerHTML='✅✅✅ SUCCESS! All tests passed. ✅✅✅\n\nThe exercise has been marked as completed.';document.getElementById('btnCloseOutput').style.display='inline';
       api('/api/save-output/'+pts(currentId).p3,{method:'POST',body:JSON.stringify({output:ob.innerHTML})}).catch(()=>{});
       const ex=exercises.find(e=>e.id===currentId);if(ex)doneSet.add(ex.name);renderList();document.querySelectorAll('.subject-inline').forEach(x=>x.classList.remove('open'));const sj=document.getElementById('subj_'+(ex?ex.name:''));if(sj&&ex&&ex.subject)sj.classList.add('open');
       document.getElementById('statusRight').textContent=`${doneSet.size}/${exercises.length} completed`;
@@ -331,14 +371,15 @@ async function runTest(){
       clean=clean.replace(/\\n/g,'\n').replace(/\\t/g,'\t');
       clean=clean.replace(/</g,'&lt;').replace(/>/g,'&gt;');
             clean=clean.replace(/^\s+/gm,'');
-      ob.innerHTML='❌❌❌ FAILURE ❌❌❌\n\n'+clean;
+      ob.innerHTML='❌❌❌ FAILURE ❌❌❌\n\n'+clean;document.getElementById('btnCloseOutput').style.display='inline';
     }
   }catch(e){
     if(e.name==='AbortError'){cancelTest();return}
-    api('/api/save-output/'+pts(currentId).p3,{method:'POST',body:JSON.stringify({output:'❌ Errore: '+e.message})}).catch(()=>{});ob.className='output-body failure';ob.innerHTML='❌ Errore: '+e.message
+    api('/api/save-output/'+pts(currentId).p3,{method:'POST',body:JSON.stringify({output:'❌ Errore: '+e.message})}).catch(()=>{});ob.className='output-body failure';ob.innerHTML='❌ Errore: '+e.message;document.getElementById('btnCloseOutput').style.display='inline'
   }
-  btn.disabled=false;btn.textContent='▶️ grademe';
+  btn.disabled=false;btn.textContent='📝 grademe';
   document.getElementById('btnCancel').style.display='none';
+  document.getElementById('outputMode').textContent='Evaluation';
 }
 async function resetExercise(){if(!currentId||!confirm('Delete this exercise? The saved code will be removed.'))return;await api(rsUrl(currentId),{method:'POST'});const ex=exercises.find(e=>e.id===currentId);if(ex){doneSet.delete(ex.name);failSet.delete(ex.name)};localStorage.setItem('42_fails',JSON.stringify([...failSet]));renderList();selectExercise(currentId)}
 async function resetAll(){if(!confirm('RESET ALL PROGRESS?'))return;await api('/api/reset-all',{method:'POST'});doneSet.clear();failSet.clear();localStorage.setItem('42_fails','[]');renderList();document.getElementById('statusRight').textContent=`0/${exercises.length} completed`;if(currentId)selectExercise(currentId)}
@@ -346,15 +387,43 @@ let zoomLevel=18;
 let abortController=null;
 function cancelTest(){
   if(abortController){abortController.abort();abortController=null}
-  const btn=document.getElementById('btnRun');btn.disabled=false;btn.textContent='▶️ grademe';
+  const btn=document.getElementById('btnRun');btn.disabled=false;btn.textContent='📝 grademe';
   document.getElementById('btnCancel').style.display='none';
   const ob=document.getElementById('outputBody');
   ob.innerHTML='<span style="color:#8b949e">⏹️ Test cancelled.</span>';
   ob.className='output-body';
+  document.getElementById('outputMode').textContent='Commands';
+  document.getElementById('btnCloseOutput').style.display='inline';
 }
 function zoomIn(){zoomLevel=Math.min(zoomLevel+2,32);applyZoom()}
 function zoomOut(){zoomLevel=Math.max(zoomLevel-2,8);applyZoom()}
 function applyZoom(){if(editor){editor.setFontSize(zoomLevel+'px')}document.getElementById('zoomLabel').textContent=zoomLevel}
+// Terminal toggle
+function toggleTerminal(){
+  const p=document.getElementById('outputPane');
+  p.classList.toggle('hidden');
+  document.getElementById('btnToggleTerminal').style.opacity=p.classList.contains('hidden')?'.4':'1';
+  setTimeout(()=>{if(editor)editor.resize()},50);
+}
+// Close output - show commands placeholder
+function closeOutput(){
+  const ob=document.getElementById('outputBody');
+  ob.innerHTML='<span style="color:#8b949e">Ctrl+R = Run code | Ctrl+G = Grading | Ctrl+S = Save</span>';
+  ob.className='output-body';
+  document.getElementById('outputTimer').textContent='';
+  document.getElementById('outputMode').textContent='Commands';
+  document.getElementById('btnCloseOutput').style.display='none';
+  api('/api/save-output/'+(currentId?pts(currentId).p3:''),{method:'POST',body:JSON.stringify({output:''})}).catch(()=>{});
+}
+// Resize output pane
+let resizeActive=false;
+document.addEventListener('DOMContentLoaded',function(){
+  const handle=document.getElementById('resizeHandle');
+  const pane=document.getElementById('outputPane');
+  handle.addEventListener('mousedown',function(e){e.preventDefault();resizeActive=true;handle.classList.add('active')});
+  document.addEventListener('mousemove',function(e){if(!resizeActive)return;const w=Math.max(200,Math.min(window.innerWidth-400,window.innerWidth-e.clientX-5));pane.style.width=w+'px';if(editor)editor.resize()});
+  document.addEventListener('mouseup',function(){if(resizeActive){resizeActive=false;document.getElementById('resizeHandle').classList.remove('active')}});
+});
 setInterval(()=>{if(currentId&&editor)saveCode()},30000);
 loadExercises();
 </script>

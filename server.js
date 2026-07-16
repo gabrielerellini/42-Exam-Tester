@@ -78,6 +78,22 @@ app.get('/api/exercise/:part/:exam/:level/:exName', (req, res) => {
 
 
 
+app.post('/api/run-code/:exName', (req, res) => {
+  const { exName } = req.params;
+  const dir = path.join(RENDU_DIR, exName);
+  const codeFile = path.join(dir, `${exName}.c`);
+  if (!fs.existsSync(codeFile)) return res.json({ output: 'No code saved yet.' });
+  try {
+    const start = Date.now();
+    execSync(`cd "${dir}" && gcc -Wall -Wextra -Werror "${exName}.c" -o "${exName}" 2>&1`, { timeout: 10000, stdio: 'pipe' });
+    const out = execSync(`cd "${dir}" && ./"${exName}" 2>&1`, { timeout: 5000, stdio: 'pipe' });
+    res.json({ output: out.toString().replace(/\n$/, "") + "\n$", elapsed: Date.now() - start });
+  } catch (e) {
+    const msg = e.stdout ? e.stdout.toString() : e.stderr ? e.stderr.toString() : e.message;
+    res.json({ output: msg || 'Compilation/execution error', elapsed: 0 });
+  }
+});
+
 app.post('/api/save-output/:exName', (req, res) => {
   const { exName } = req.params;
   const dir = path.join(RENDU_DIR, exName);
@@ -97,13 +113,15 @@ app.post('/api/save-code/:part/:exam/:level/:exName', (req, res) => {
   const { exName } = req.params;
   const dir = path.join(RENDU_DIR, exName);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, `${exName}.c`), req.body.code, 'utf-8');
+  fs.writeFileSync(path.join(dir, exName + '.c'), req.body.code, 'utf-8');
   res.json({ success: true });
 });
 
 app.post('/api/run-test/:part/:exam/:level/:exName', (req, res) => {
   const { part, exam, level, exName } = req.params;
   const ep = path.join(SUBJECTS_DIR, part, exam, level, exName);
+  if (!fs.existsSync(ep)) return res.status(404).json({ error: 'Subject not found' });
+
   if (!fs.existsSync(path.join(ep, 'tester.sh')))
     return res.status(400).json({ error: 'No tester available' });
 
@@ -127,7 +145,7 @@ app.post('/api/run-test/:part/:exam/:level/:exName', (req, res) => {
     if (passed) {
       const successes = fs.existsSync(SUCCESS_FILE) ? fs.readFileSync(SUCCESS_FILE, 'utf-8').split('\n').filter(l => l.trim()) : [];
       if (!successes.includes(exName)) fs.appendFileSync(SUCCESS_FILE, exName + '\n', 'utf-8');
-      const uf = path.join(RENDU_DIR, exName, `${exName}.c`);
+      const uf = path.join(RENDU_DIR, exName, exName + '.c');
       if (fs.existsSync(uf)) execSync(`cp "${uf}" "${path.join(__dirname, 'success')}/${exName}.c" 2>/dev/null`, { stdio: 'pipe' });
     }
     res.json({ passed, traceback: tb, output: '', elapsed: Date.now() - start });
@@ -165,9 +183,9 @@ app.post('/api/reset/:exName', (req, res) => {
 
 app.post('/api/reset-all', (req, res) => {
   if (fs.existsSync(SUCCESS_FILE)) fs.writeFileSync(SUCCESS_FILE, '', 'utf-8');
-  if (fs.existsSync(RENDU_DIR)) execSync(`rm -rf "${RENDU_DIR}/*"`, { stdio: 'pipe' });
+  if (fs.existsSync(RENDU_DIR)) execSync('rm -rf "${RENDU_DIR}/*"', { stdio: 'pipe' });
   res.json({ success: true });
 });
 
 const PORT = 4242;
-app.listen(PORT, () => console.log(`🚀 42 Exam Web IDE at http://localhost:${PORT}`));
+app.listen(PORT, () => console.log('🚀 42 Exam Web IDE at http://localhost:' + PORT));
