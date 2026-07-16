@@ -8,9 +8,11 @@ A web IDE to practice for **42 exams**, directly from your browser.
 - **Autocompletion** with local words from your code
 - **Highlight occurrences** — click on a variable/function and see all matches
 - **Smart auto-indentation** for C (real tabs)
-- **Run Code** (Ctrl+R) — compile & run your code instantly, useful for debugging
+- **Run Code** (Ctrl+R) — compile & run your code instantly with custom arguments, useful for debugging
 - **Grademe** (Ctrl+G) — automated tests with error tracing
+- **Custom compile/run command** — edit the command bar below the editor to pass arguments like `./alpha_mirror "test"`
 - **Resizable output panel** — drag to resize, toggle with 🖥️ button
+- **Output shows `$`** when no output produced, normal newlines otherwise
 - **Auto-save** every 30 seconds
 - **Progress tracking** — completed/failed exercises persist in localStorage
 - **Exam filters** (Exam 02, Exam 03, ...)
@@ -46,7 +48,7 @@ To stop the server: press `Ctrl+C` in the terminal.
 
 | Key | Action |
 |---|---|
-| Ctrl+R | Run code (compile + execute) |
+| Ctrl+R | Run code with custom args |
 | Ctrl+G | Grading (run official tests) |
 | Ctrl+S | Save code |
 

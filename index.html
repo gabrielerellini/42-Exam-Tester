@@ -74,7 +74,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .ace_scrollbar::-webkit-scrollbar-track{background:transparent}
 .ace_scrollbar::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
 .editor-pane{position:relative}
-.output-pane{width:400px;min-width:200px;border-left:1px solid #30363d55;display:flex;flex-direction:column;background:rgba(13,17,23,.5);position:relative}
+.compile-cmd-bar{display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(13,17,23,.7);border-top:1px solid #30363d55;font-family:'Courier New',monospace;font-size:.8rem}
+.compile-cmd-label{color:#3fb950;font-weight:700;font-size:.9rem}
+.compile-cmd-input{background:transparent;border:none;outline:none;color:#c9d1d9;font-family:'Courier New',monospace;font-size:.8rem;min-width:50px;flex:1}
+.compile-cmd-input::placeholder{color:#484f58}
+
+.output-pane{width:200px;min-width:200px;border-left:1px solid #30363d55;display:flex;flex-direction:column;background:rgba(13,17,23,.5);position:relative}
 .output-pane.hidden{display:none}
 .resize-handle{width:5px;cursor:col-resize;background:transparent;position:absolute;left:-3px;top:0;bottom:0;z-index:10}
 .resize-handle:hover,.resize-handle.active{background:#58a6ff55}
@@ -89,10 +94,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .loading .spinner{width:24px;height:24px;border:3px solid #30363d;border-top-color:#58a6ff;border-radius:50%;animation:spin .8s linear infinite;margin-right:.5rem}
 @keyframes spin{to{transform:rotate(360deg)}}
 .status-bar{padding:.3rem 1rem;background:rgba(22,27,34,.7);border-top:1px solid #30363d55;font-size:.75rem;color:#8b949e;display:flex;justify-content:space-between}
-#editor{position:absolute;top:0;left:0;right:0;bottom:0;font-size:18px}
+#editor{flex:1;font-size:18px;min-height:0}
 </style>
 </head>
-<body onkeydown="if(event.ctrlKey&&event.key=='r'){event.preventDefault();runCode()}else if(event.ctrlKey&&event.key=='g'){event.preventDefault();runTest()}">
+<body>
 <div id="app">
   <div class="sidebar">
     <div class="sidebar-header">
@@ -125,6 +130,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="editor-pane">
         <div class="loading" id="editorLoading"><div class="spinner"></div><span>Loading...</span></div>
         <div id="editor"></div>
+        <div class="compile-cmd-bar">
+          <span class="compile-cmd-label">></span>
+          <span id="compileCmdPrefix" class="compile-cmd-label" style="white-space:nowrap"></span><input type="text" id="compileCmdArgs" class="compile-cmd-input" placeholder="args" spellcheck="false">
+          <span onclick="resetCompileCmd()" style="cursor:pointer;color:#8b949e;font-size:.9rem;line-height:1" title="Reset">↻</span>
+        </div>
       </div>
       <div class="output-pane" id="outputPane">
         <div class="resize-handle" id="resizeHandle"></div>
@@ -232,6 +242,7 @@ async function selectExercise(id){
     document.getElementById('btnRun').style.display='inline-block';
     document.getElementById('btnReset').style.display='inline-block';
     document.getElementById('statusLeft').textContent='📁 '+d.id;
+    api('/api/get-compile-cmd/'+pts(id).p3).catch(()=>({cmd:''})).then(r=>{const exName=pts(id).p3;document.getElementById('compileCmdPrefix').textContent='./'+exName+' ';const saved=r&&r.cmd?r.cmd.replace('./'+exName,'').trim():'';document.getElementById('compileCmdArgs').value=saved});
     const code=d.userCode||'';
     if(!editor){
       editor = ace.edit('editor');
@@ -340,7 +351,8 @@ async function runCode(){
   const ob=document.getElementById('outputBody');ob.innerHTML='<div class="loading"><div class="spinner"></div><span>Compiling & Running...</span></div>';ob.className='output-body';
   try{
     const exName=pts(currentId).p3;
-    const r=await api('/api/run-code/'+exName,{method:'POST'});
+    const cmd=(document.getElementById('compileCmdPrefix').textContent+document.getElementById('compileCmdArgs').value).trim();
+    const r=await api('/api/run-code/'+exName,{method:'POST',body:JSON.stringify({cmd})});
     document.getElementById('outputTimer').textContent=r.elapsed?(r.elapsed/1000).toFixed(1)+'s':'';
     ob.innerHTML='<pre style="margin:0;white-space:pre-wrap">'+r.output.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</pre>';
     ob.className='output-body';document.getElementById('btnCloseOutput').style.display='inline';
@@ -395,6 +407,8 @@ function cancelTest(){
   document.getElementById('outputMode').textContent='Commands';
   document.getElementById('btnCloseOutput').style.display='inline';
 }
+document.addEventListener('blur',function(e){if(e.target.id==='compileCmdArgs'&&currentId){const exName=pts(currentId).p3;const v='./'+exName+' '+e.target.value;api('/api/save-compile-cmd/'+exName,{method:'POST',body:JSON.stringify({cmd:v.trim()})}).catch(()=>{})}},true);
+function resetCompileCmd(){const exName=currentId?pts(currentId).p3:'';if(!exName)return;const v='./'+exName;document.getElementById('compileCmdArgs').value='';api('/api/save-compile-cmd/'+exName,{method:'POST',body:JSON.stringify({cmd:v})}).catch(()=>{})}
 function zoomIn(){zoomLevel=Math.min(zoomLevel+2,32);applyZoom()}
 function zoomOut(){zoomLevel=Math.max(zoomLevel-2,8);applyZoom()}
 function applyZoom(){if(editor){editor.setFontSize(zoomLevel+'px')}document.getElementById('zoomLabel').textContent=zoomLevel}
@@ -424,6 +438,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.addEventListener('mousemove',function(e){if(!resizeActive)return;const w=Math.max(200,Math.min(window.innerWidth-400,window.innerWidth-e.clientX-5));pane.style.width=w+'px';if(editor)editor.resize()});
   document.addEventListener('mouseup',function(){if(resizeActive){resizeActive=false;document.getElementById('resizeHandle').classList.remove('active')}});
 });
+document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveCode()}else if((e.ctrlKey||e.metaKey)&&e.key==='r'){e.preventDefault();if(currentId)runCode()}else if((e.ctrlKey||e.metaKey)&&e.key==='g'){e.preventDefault();if(currentId)runTest()}},true);
 setInterval(()=>{if(currentId&&editor)saveCode()},30000);
 loadExercises();
 </script>

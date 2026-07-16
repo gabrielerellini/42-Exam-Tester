@@ -80,18 +80,38 @@ app.get('/api/exercise/:part/:exam/:level/:exName', (req, res) => {
 
 app.post('/api/run-code/:exName', (req, res) => {
   const { exName } = req.params;
+  const { cmd } = req.body || {};
   const dir = path.join(RENDU_DIR, exName);
   const codeFile = path.join(dir, `${exName}.c`);
   if (!fs.existsSync(codeFile)) return res.json({ output: 'No code saved yet.' });
   try {
     const start = Date.now();
-    execSync(`cd "${dir}" && gcc -Wall -Wextra -Werror "${exName}.c" -o "${exName}" 2>&1`, { timeout: 10000, stdio: 'pipe' });
-    const out = execSync(`cd "${dir}" && ./"${exName}" 2>&1`, { timeout: 5000, stdio: 'pipe' });
-    res.json({ output: out.toString().replace(/\n$/, "") + "\n$", elapsed: Date.now() - start });
+    const runPart = (cmd||'./'+exName).replace('./'+exName, '').trim().replace(/\s+/g, ' ');
+    const fullCmd = `cd "${dir}" && gcc -Wall -Wextra -Werror "${exName}.c" -o "${exName}" 2>&1 && ./"${exName}" ${runPart}`;
+    const out = execSync(fullCmd, { timeout: 15000, stdio: 'pipe', shell: '/bin/bash' });
+    const raw = out.toString(); const outStr = raw.replace(/\n$/, "") || "$"; res.json({ output: outStr, elapsed: Date.now() - start });
   } catch (e) {
-    const msg = e.stdout ? e.stdout.toString() : e.stderr ? e.stderr.toString() : e.message;
+    let msg = '';
+    if (e.stdout) msg += e.stdout.toString();
+    if (e.stderr) msg += e.stderr.toString();
+    if (!msg) msg = e.message;
     res.json({ output: msg || 'Compilation/execution error', elapsed: 0 });
   }
+});
+
+app.post('/api/save-compile-cmd/:exName', (req, res) => {
+  const { exName } = req.params;
+  const dir = path.join(RENDU_DIR, exName);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, '.compile_cmd'), req.body.cmd || '', 'utf-8');
+  res.json({ success: true });
+});
+
+app.get('/api/get-compile-cmd/:exName', (req, res) => {
+  const { exName } = req.params;
+  const f = path.join(RENDU_DIR, exName, '.compile_cmd');
+  const cmd = fs.existsSync(f) ? fs.readFileSync(f, 'utf-8') : '';
+  res.json({ cmd });
 });
 
 app.post('/api/save-output/:exName', (req, res) => {
