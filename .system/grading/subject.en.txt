@@ -1,18 +1,21 @@
-Assignment name  : rev_print
-Expected files   : rev_print.c
-Allowed functions: write
+Assignment name  : snake_to_camel
+Expected files   : snake_to_camel.c
+Allowed functions: malloc, free, realloc, write
 --------------------------------------------------------------------------------
 
-Write a program that takes a string, and displays the string in reverse
-followed by a newline.
+Write a program that takes a single string in snake_case format
+and converts it into a string in lowerCamelCase format.
 
-If the number of parameters is not 1, the program displays a newline.
+A snake_case string is a string where each word is in lower case, separated by
+an underscore "_".
+
+A lowerCamelCase string is a string where each word begins with a capital letter
+except for the first one.
 
 Examples:
-
-$> ./rev_print "zaz" | cat -e
-zaz$
-$> ./rev_print "dub0 a POIL" | cat -e
-LIOP a 0bud$
-$> ./rev_print | cat -e
+$>./snake_to_camel "here_is_a_snake_case_word"
+hereIsASnakeCaseWord
+$>./snake_to_camel "hello_world" | cat -e
+helloWorld$
+$>./snake_to_camel | cat -e
 $

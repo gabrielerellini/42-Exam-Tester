@@ -3,15 +3,15 @@
 #                                                         :::      ::::::::    #
 #    tester.sh                                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: jcluzet <jcluzet@student.42.fr>            +#+  +:+       +#+         #
+#    By: nnuno-ca <nnuno-ca@student.42porto.com>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/06/20 02:26:11 by jcluzet           #+#    #+#              #
-#    Updated: 2022/09/01 23:42:44 by jcluzet          ###   ########.fr        #
+#    Updated: 2023/03/06 22:05:54 by nnuno-ca         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-FILE='rev_print.c'
-ASSIGN='rev_print'
+FILE='snake_to_camel.c'
+ASSIGN='snake_to_camel'
 
 bash .system/auto_correc_program.sh $FILE $ASSIGN 
 if [ -e .system/grading/traceback ];then
@@ -19,55 +19,25 @@ if [ -e .system/grading/traceback ];then
 	exit 1
 fi
 
-bash .system/auto_correc_program.sh $FILE $ASSIGN "abc"
-if [ -e .system/grading/traceback ];then
-    mv .system/grading/traceback .
-	exit 1
-fi
-
-bash .system/auto_correc_program.sh $FILE $ASSIGN "FOR PONY"
-if [ -e .system/grading/traceback ];then
-    mv .system/grading/traceback .
-	exit 1
-fi
-
-bash .system/auto_correc_program.sh $FILE $ASSIGN "this        ...       is sparta, then again, maybe    not"
-if [ -e .system/grading/traceback ];then
-    mv .system/grading/traceback .
-	exit 1
-fi
-
-bash .system/auto_correc_program.sh $FILE $ASSIGN "   "
-if [ -e .system/grading/traceback ];then
-    mv .system/grading/traceback .
-	exit 1
-fi
-
-bash .system/auto_correc_program.sh $FILE $ASSIGN "a" "b"
-if [ -e .system/grading/traceback ];then
-    mv .system/grading/traceback .
-	exit 1
-fi
-
-bash .system/auto_correc_program.sh $FILE $ASSIGN "  lorem,ipsum  "
-if [ -e .system/grading/traceback ];then
-    mv .system/grading/traceback .
-	exit 1
-fi
-
-bash .system/auto_correc_program.sh $FILE $ASSIGN "Alex."
-if [ -e .system/grading/traceback ];then
-    mv .system/grading/traceback .
-	exit 1
-fi
-
-bash .system/auto_correc_program.sh $FILE $ASSIGN "abacadaba 42!"
-if [ -e .system/grading/traceback ];then
-    mv .system/grading/traceback .
-	exit 1
-fi
-
 bash .system/auto_correc_program.sh $FILE $ASSIGN ""
+if [ -e .system/grading/traceback ];then
+    mv .system/grading/traceback .
+	exit 1
+fi
+
+bash .system/auto_correc_program.sh $FILE $ASSIGN "here_is_a_snake_case_string"
+if [ -e .system/grading/traceback ];then
+    mv .system/grading/traceback .
+	exit 1
+fi
+
+bash .system/auto_correc_program.sh $FILE $ASSIGN "hello_world"
+if [ -e .system/grading/traceback ];then
+    mv .system/grading/traceback .
+	exit 1
+fi
+
+bash .system/auto_correc_program.sh $FILE $ASSIGN "test_with" "multiple_arguments" "aAa"
 if [ -e .system/grading/traceback ];then
     mv .system/grading/traceback .
 	exit 1

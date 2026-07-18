@@ -5,7 +5,7 @@ A web IDE to practice for **42 exams**, directly from your browser.
 ## ✨ Features
 
 - **Ace Editor** (the same as onlineGDB) with C syntax highlighting
-- **Autocompletion** with local words from your code
+- **Smart Autocompletion** — local variables (highest priority) + C keywords + symbols from `#include`d libraries (parsed from your code)
 - **Highlight occurrences** — click on a variable/function and see all matches
 - **Smart auto-indentation** for C (real tabs)
 - **Run Code** (Ctrl+R) — compile & run your code instantly with custom arguments, useful for debugging

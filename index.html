@@ -281,26 +281,214 @@ async function selectExercise(id){
         exec: function() { runTest(); }
       });
 
-                  // ★ COMPLETER: solo parole locali dal documento ★
+      // ★ LIBRARY SYMBOLS MAP per #include parsing ★
+      var libSymbols = {
+        'unistd.h': [
+          'write', 'read', 'open', 'close', 'dup', 'dup2', 'pipe', 'fork', 'execve',
+          'execvp', 'execlp', 'access', 'unlink', 'rmdir', 'chdir', 'getcwd',
+          'sleep', 'usleep', 'getpid', 'getppid', 'exit', '_exit',
+          'STDIN_FILENO', 'STDOUT_FILENO', 'STDERR_FILENO', 'NULL'
+        ],
+        'stdlib.h': [
+          'malloc', 'free', 'calloc', 'realloc', 'exit', 'atoi', 'atol', 'atof',
+          'rand', 'srand', 'abs', 'labs', 'qsort', 'bsearch', 'getenv', 'setenv',
+          'unsetenv', 'system', 'NULL', 'EXIT_SUCCESS', 'EXIT_FAILURE',
+          'size_t', 'div_t', 'ldiv_t'
+        ],
+        'stdio.h': [
+          'printf', 'fprintf', 'sprintf', 'snprintf', 'scanf', 'fscanf', 'sscanf',
+          'putchar', 'putc', 'puts', 'fputs', 'getchar', 'getc', 'gets', 'fgets',
+          'fopen', 'fclose', 'fread', 'fwrite', 'fseek', 'ftell', 'rewind',
+          'feof', 'ferror', 'clearerr', 'fflush', 'setbuf', 'setvbuf',
+          'perror', 'rename', 'remove', 'tmpfile', 'tmpnam',
+          'FILE', 'NULL', 'size_t', 'EOF', 'stdin', 'stdout', 'stderr',
+          'BUFSIZ', 'SEEK_SET', 'SEEK_CUR', 'SEEK_END'
+        ],
+        'string.h': [
+          'strlen', 'strcpy', 'strncpy', 'strcat', 'strncat', 'strcmp', 'strncmp',
+          'strchr', 'strrchr', 'strstr', 'strnstr', 'strcspn', 'strspn', 'strpbrk',
+          'strtok', 'strdup', 'strndup', 'memset', 'memcpy', 'memmove', 'memcmp',
+          'memchr', 'memccpy', 'bzero', 'strerror', 'strerror_r',
+          'size_t', 'NULL'
+        ],
+        'strings.h': [
+          'strcasecmp', 'strncasecmp', 'bcopy', 'bzero', 'bcmp', 'index', 'rindex',
+          'ffs', 'strcasestr', 'NULL'
+        ],
+        'ctype.h': [
+          'isalpha', 'isdigit', 'isalnum', 'isascii', 'isprint', 'isgraph',
+          'islower', 'isupper', 'isspace', 'ispunct', 'iscntrl',
+          'tolower', 'toupper', 'NULL'
+        ],
+        'stdarg.h': [
+          'va_list', 'va_start', 'va_end', 'va_arg', 'va_copy'
+        ],
+        'stdint.h': [
+          'int8_t', 'int16_t', 'int32_t', 'int64_t',
+          'uint8_t', 'uint16_t', 'uint32_t', 'uint64_t',
+          'size_t', 'ssize_t', 'intptr_t', 'uintptr_t',
+          'INT_MAX', 'INT_MIN', 'UINT_MAX', 'NULL'
+        ],
+        'stdbool.h': [ 'bool', 'true', 'false', '_Bool' ],
+        'stddef.h': [ 'NULL', 'size_t', 'ptrdiff_t', 'offsetof', 'wchar_t' ],
+        'limits.h': [
+          'CHAR_BIT', 'CHAR_MAX', 'CHAR_MIN', 'SCHAR_MAX', 'SCHAR_MIN',
+          'INT_MAX', 'INT_MIN', 'UINT_MAX', 'LONG_MAX', 'LONG_MIN',
+          'SHRT_MAX', 'SHRT_MIN', 'LLONG_MAX', 'LLONG_MIN'
+        ],
+        'fcntl.h': [
+          'open', 'fcntl', 'creat',
+          'O_RDONLY', 'O_WRONLY', 'O_RDWR', 'O_CREAT', 'O_EXCL', 'O_TRUNC',
+          'O_APPEND', 'O_NONBLOCK', 'O_SYNC', 'O_NOCTTY', 'O_DIRECTORY',
+          'F_DUPFD', 'F_GETFD', 'F_SETFD', 'F_GETFL', 'F_SETFL',
+          'FD_CLOEXEC', 'NULL'
+        ],
+        'math.h': [
+          'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2',
+          'sinh', 'cosh', 'tanh', 'sqrt', 'cbrt', 'pow', 'exp', 'log', 'log10',
+          'ceil', 'floor', 'round', 'trunc', 'fabs', 'fmod', 'remainder',
+          'fmin', 'fmax', 'hypot',
+          'M_PI', 'M_E', 'M_SQRT2', 'M_SQRT1_2', 'INFINITY', 'NAN'
+        ],
+        'signal.h': [
+          'signal', 'raise', 'kill', 'sigaction', 'sigemptyset', 'sigfillset',
+          'sigaddset', 'sigdelset', 'sigismember', 'sigprocmask',
+          'SIGINT', 'SIGQUIT', 'SIGKILL', 'SIGTERM', 'SIGSTOP', 'SIGCONT',
+          'SIGUSR1', 'SIGUSR2', 'SIGALRM', 'SIGCHLD', 'SIGHUP', 'SIGPIPE',
+          'SIG_DFL', 'SIG_IGN', 'SIG_ERR', 'NULL'
+        ],
+        'sys/stat.h': [
+          'stat', 'fstat', 'lstat', 'chmod', 'fchmod', 'mkdir', 'umask',
+          'S_IRWXU', 'S_IRUSR', 'S_IWUSR', 'S_IXUSR',
+          'S_IRWXG', 'S_IRGRP', 'S_IWGRP', 'S_IXGRP',
+          'S_IRWXO', 'S_IROTH', 'S_IWOTH', 'S_IXOTH',
+          'S_IFMT', 'S_IFSOCK', 'S_IFLNK', 'S_IFREG', 'S_IFBLK', 'S_IFDIR',
+          'S_IFCHR', 'S_IFIFO', 'S_ISUID', 'S_ISGID', 'S_ISVTX',
+          'S_ISREG', 'S_ISDIR', 'S_ISCHR', 'S_ISBLK', 'S_ISFIFO', 'S_ISLNK', 'S_ISSOCK',
+          'mode_t', 'dev_t', 'ino_t', 'nlink_t', 'uid_t', 'gid_t', 'off_t',
+          'blksize_t', 'blkcnt_t', 'NULL'
+        ],
+        'sys/wait.h': [
+          'wait', 'waitpid', 'wait3', 'wait4', 'waitid',
+          'WNOHANG', 'WUNTRACED', 'WCONTINUED',
+          'WIFEXITED', 'WEXITSTATUS', 'WIFSIGNALED', 'WTERMSIG',
+          'WIFSTOPPED', 'WSTOPSIG', 'WIFCONTINUED',
+          'pid_t', 'siginfo_t', 'NULL'
+        ],
+        'time.h': [
+          'time', 'clock', 'difftime', 'mktime', 'localtime', 'gmtime',
+          'asctime', 'ctime', 'strftime', 'tzset', 'nanosleep',
+          'clock_gettime', 'clock_getres', 'gettimeofday',
+          'time_t', 'clock_t', 'size_t', 'NULL',
+          'CLOCK_REALTIME', 'CLOCK_MONOTONIC', 'CLOCK_PROCESS_CPUTIME_ID'
+        ],
+        'dirent.h': [
+          'opendir', 'readdir', 'closedir', 'rewinddir', 'seekdir', 'telldir',
+          'DIR', 'dirent',
+          'd_ino', 'd_off', 'd_reclen', 'd_type', 'd_name', 'NULL'
+        ],
+        'errno.h': [
+          'errno', 'EDOM', 'ERANGE', 'EINVAL', 'ENOMEM', 'EACCES', 'EEXIST',
+          'EIO', 'ENOENT', 'ENOSPC', 'EPERM', 'EPIPE', 'EAGAIN', 'EBADF',
+          'ECHILD', 'EINTR', 'EISDIR', 'ENOTDIR', 'ENOTEMPTY', 'ENOTTY',
+          'ENXIO', 'EOVERFLOW', 'EROFS', 'ESPIPE', 'ESRCH', 'ETIMEDOUT',
+          'EXDEV', 'EFAULT', 'EFBIG', 'EILSEQ', 'EMFILE', 'ENFILE',
+          'ENODEV', 'ENOEXEC', 'ENOLCK', 'ENOMSG', 'ENOSYS', 'ENOTBLK',
+          'ENOTCONN', 'ENOTSOCK', 'ENOTSUP', 'EOPNOTSUPP', 'EOWNERDEAD',
+          'EPROTO', 'EPROTONOSUPPORT', 'EPROTOTYPE', 'EREMOTE', 'ESHUTDOWN',
+          'ESOCKTNOSUPPORT', 'ESTALE', 'ETIME', 'ETXTBSY', 'EUSERS',
+          'EWOULDBLOCK', 'EXFULL', 'NULL'
+        ],
+        'pthread.h': [
+          'pthread_create', 'pthread_join', 'pthread_detach', 'pthread_exit',
+          'pthread_self', 'pthread_equal', 'pthread_mutex_init',
+          'pthread_mutex_destroy', 'pthread_mutex_lock', 'pthread_mutex_unlock',
+          'pthread_mutex_trylock', 'pthread_cond_init', 'pthread_cond_destroy',
+          'pthread_cond_wait', 'pthread_cond_signal', 'pthread_cond_broadcast',
+          'pthread_key_create', 'pthread_key_delete', 'pthread_getspecific',
+          'pthread_setspecific', 'pthread_once',
+          'pthread_t', 'pthread_mutex_t', 'pthread_mutexattr_t',
+          'pthread_cond_t', 'pthread_condattr_t', 'pthread_key_t',
+          'pthread_once_t', 'NULL',
+          'PTHREAD_MUTEX_INITIALIZER', 'PTHREAD_COND_INITIALIZER',
+          'PTHREAD_ONCE_INIT', 'PTHREAD_CREATE_JOINABLE', 'PTHREAD_CREATE_DETACHED'
+        ],
+        'semaphore.h': [
+          'sem_init', 'sem_destroy', 'sem_wait', 'sem_trywait', 'sem_post',
+          'sem_getvalue', 'sem_open', 'sem_close', 'sem_unlink',
+          'sem_t', 'NULL'
+        ]
+      };
+
+      // Funzione per estrarre le librerie incluse nel documento
+      function getIncludedLibs(lines) {
+        var libs = {};
+        for (var r = 0; r < lines.length; r++) {
+          var line = lines[r].trim();
+          var m = line.match(/^#include\s+<([^>]+)>/);
+          if (m) {
+            var libName = m[1];
+            if (libSymbols[libName]) {
+              libs[libName] = true;
+            } else {
+              var base = libName.split('/').pop();
+              if (libSymbols[base]) {
+                libs[base] = true;
+              }
+            }
+          }
+        }
+        return Object.keys(libs);
+      }
+                  // ★ KEYWORD del linguaggio C (sempre disponibili) ★
+      var cKeywords = [
+        'auto', 'break', 'case', 'char', 'const', 'continue', 'default', 'do',
+        'double', 'else', 'enum', 'extern', 'float', 'for', 'goto', 'if',
+        'int', 'long', 'register', 'return', 'short', 'signed', 'sizeof', 'static',
+        'struct', 'switch', 'typedef', 'union', 'unsigned', 'void', 'volatile', 'while',
+        'include', 'define', 'ifdef', 'ifndef', 'endif', 'undef', 'pragma', 'error',
+        'inline', 'restrict', '_Bool', '_Complex', '_Imaginary'
+      ];
+      // ★ COMPLETER: parole locali (priorità alta) + keyword C + simboli librerie incluse ★
       var localCompleter = {
         getCompletions: function(editor, session, pos, prefix, callback) {
-          var words = {};
           var lines = session.getDocument().getAllLines();
+          // 1) parole locali (dal documento) — score 100
+          var localWords = {};
           for (var r = 0; r < lines.length; r++) {
             var parts = lines[r].split(/[^a-zA-Z0-9_]+/);
             for (var p = 0; p < parts.length; p++) {
               var w = parts[p];
               if (w && w.length >= prefix.length && w.substring(0, prefix.length) === prefix) {
-                words[w] = {name: w, value: w, score: 50, meta: 'local'};
+                localWords[w] = {name: w, value: w, score: 100, meta: 'local'};
+              }
+            }
+          }
+          // 2) keyword del C — score 80
+          for (var i = 0; i < cKeywords.length; i++) {
+            var kw = cKeywords[i];
+            if (kw.substring(0, prefix.length) === prefix && !localWords[kw]) {
+              localWords[kw] = {name: kw, value: kw, score: 80, meta: 'keyword'};
+            }
+          }
+          // 3) simboli dalle librerie incluse — score 60
+          var includedLibs = getIncludedLibs(lines);
+          for (var li = 0; li < includedLibs.length; li++) {
+            var libName = includedLibs[li];
+            var symbols = libSymbols[libName] || [];
+            for (var s = 0; s < symbols.length; s++) {
+              var sym = symbols[s];
+              if (sym.substring(0, prefix.length) === prefix && !localWords[sym]) {
+                localWords[sym] = {name: sym, value: sym, score: 60, meta: libName};
               }
             }
           }
           var result = [];
-          for (var k in words) result.push(words[k]);
+          for (var k in localWords) result.push(localWords[k]);
           callback(null, result);
         }
       };
-      // Sostituisce TUTTI i completer di default con solo il nostro
+      // Usa SOLO i nostri completer, niente default ACE
       editor.completers = [localCompleter];
 
       // ★ HIGHLIGHT OCCURRENCES con changeCursor ★
