@@ -74,7 +74,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .ace_scrollbar::-webkit-scrollbar-track{background:transparent}
 .ace_scrollbar::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
 .editor-pane{position:relative}
-.ace_autocomplete{max-height:160px!important;overflow-y:auto!important}
+.ace_autocomplete{max-height:160px!important;overflow-y:hidden!important}
+.ace_autocomplete .ace_scrollbar{overflow-y:auto!important;scrollbar-width:thin!important;scrollbar-color:#30363d transparent!important}
+.ace_autocomplete .ace_scrollbar::-webkit-scrollbar{width:6px!important}
+.ace_autocomplete .ace_scrollbar::-webkit-scrollbar-track{background:transparent!important}
+.ace_autocomplete .ace_scrollbar::-webkit-scrollbar-thumb{background:#30363d!important;border-radius:3px!important}
 .compile-cmd-bar{display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(13,17,23,.7);border-top:1px solid #30363d55;font-family:'Courier New',monospace;font-size:.8rem}
 .compile-cmd-label{color:#3fb950;font-weight:700;font-size:.9rem}
 .compile-cmd-input{background:transparent;border:none;outline:none;color:#c9d1d9;font-family:'Courier New',monospace;font-size:.8rem;min-width:50px;flex:1}
